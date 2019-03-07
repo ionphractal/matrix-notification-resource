@@ -58,7 +58,7 @@ DATA_FILE_CONTENT=""
 
 if [[ "$always_notify" == "true" || -n "$TEXT_FILE_CONTENT" || -z "$text_file" || -n "$DATA_FILE_CONTENT" ]]
 then
-  TEXT_FILE_CONTENT="${TEXT_FILE_CONTENT:-_(text_file not provided)_}"
+  export TEXT_FILE_CONTENT="${TEXT_FILE_CONTENT:-_(text_file not provided)_}"
 
   text=$(echo -n "${text}" | envsubst)
   [[ -z "${text}" ]] && text="_(missing notification text)_"
@@ -70,7 +70,7 @@ then
     [ -n "${formatted_body}" ] && formatted_body="${prefix}: ${formatted_body}"
   fi
 
-  text="$(echo -n "${text}" | jq -R -s .)"
+  text=$(echo -n "${text}" | jq -R -s .)
   [ -n "${formatted_body}" ] && formatted_body="$(echo -n "${formatted_body}" | jq -R -s .)"
 
   [[ "${token}"   != "null" ]] && username="$(echo "$token" | envsubst | jq -R -s .)"
