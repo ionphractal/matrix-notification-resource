@@ -46,16 +46,21 @@ team="$(jq -r '.params.team // "main"' < "${payload}")"
 prefix="$(jq -r '.params.prefix // ""' < "${payload}")"
 
 
-export TEXT_FILE_CONTENT=""
-[[ -n "${text_file}" && -f "${text_file}" ]] && TEXT_FILE_CONTENT="$(cat "${text_file}")"
+TEXT_FILE_CONTENT=""
+[[ -n "${text_file}" && ! -f "${text_file}" ]] && TEXT_FILE_CONTENT="_(text_file not found)_"
+if [[ -n "${text_file}" && -f "${text_file}" ]]; then
+  TEXT_FILE_CONTENT="$(cat "${text_file}")"
+  TEXT_FILE_CONTENT="${TEXT_FILE_CONTENT:-_(text_file empty)_}"
+fi
+
 DATA_FILE_CONTENT=""
 [[ -n "${data_file}" && -f "${data_file}" ]] && DATA_FILE_CONTENT="$(cat "${data_file}")"
 
 if [[ "$always_notify" == "true" || -n "$TEXT_FILE_CONTENT" || -z "$text_file" || -n "$DATA_FILE_CONTENT" ]]
 then
-  TEXT_FILE_CONTENT="${TEXT_FILE_CONTENT:-_(no notification provided)_}"
+  TEXT_FILE_CONTENT="${TEXT_FILE_CONTENT:-_(text_file not provided)_}"
 
-  text=$(echo -n "$text" | envsubst)
+  text=$(echo -n "${text}" | envsubst)
   [[ -z "${text}" ]] && text="_(missing notification text)_"
 
   [ "${link}" == "true" ] && formatted_body="<a href=\"$ATC_EXTERNAL_URL/teams/${team}/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME\">${text}</a>"
@@ -68,8 +73,8 @@ then
   text="$(echo -n "${text}" | jq -R -s .)"
   [ -n "${formatted_body}" ] && formatted_body="$(echo -n "${formatted_body}" | jq -R -s .)"
 
-  [[ "${token}"   != "null" ]] && username=$(echo "$token" | envsubst | jq -R -s .)"
-  [[ "${room_id}" != "null" ]] && room_id=$(echo "$room_id" | envsubst | jq -R -s .)"
+  [[ "${token}"   != "null" ]] && username="$(echo "$token" | envsubst | jq -R -s .)"
+  [[ "${room_id}" != "null" ]] && room_id="$(echo "$room_id" | envsubst | jq -R -s .)"
   body="$(cat <<EOF
 {
   "msgtype": "${msgtype}",
